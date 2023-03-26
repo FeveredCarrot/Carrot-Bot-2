@@ -1,31 +1,25 @@
 import re
 import sys
-import discord
-import unicodedata
-from discord import app_commands
-import logging
 import json
-import youtube_module
+import unicodedata
+import logging
+from pathlib import PurePosixPath
 
-# discord.utils.setup_logging()
+import discord
+from discord import app_commands
+
+import youtube_module
+import settings_manager
+
 logger = logging.getLogger("discord")
+settings = settings_manager.load_settings()
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
-
+command_tree = app_commands.CommandTree(client)
 synced = False
 
-with open("settings.json", "rb") as settings_file:
-    try:
-        settings = json.load(settings_file)
-        token = settings["token"]
-        download_path = settings["download path"]
-    except json.JSONDecodeError:
-        logger.error("Failed to load settings.json. Aborting...")
-        sys.exit(1)
 
-
-@tree.command(name="play", description="Plays a youtube video.")
+@command_tree.command(name="play", description="Plays a youtube video.")
 async def play_youtube(context: discord.Interaction, link: str):
     # Try to get YouTube video info
     try:
@@ -33,24 +27,33 @@ async def play_youtube(context: discord.Interaction, link: str):
         song_title = info["title"]
         song_title_formatted = slugify(song_title)
     except youtube_module.yt_dlp.utils.DownloadError or TypeError:
-        await context.response.send_message(content="That link dont work", ephemeral=True)
+        await context.response.send_message(
+            content="That link dont work", ephemeral=True
+        )
         return
 
     # Try to get the user's voice channel
     voice_channel = context.user.voice.channel
     if voice_channel is None:
-        await context.response.send_message("You need to be in a voice channel to play a video.")
+        await context.response.send_message(
+            "You need to be in a voice channel to play a video."
+        )
         return
 
     # Download the audio from the YouTube video
     try:
-        youtube_module.download_audio(link, download_path + song_title_formatted)
+        youtube_module.download_audio(
+            link, settings["download_path"] / song_title_formatted
+        )
     except PermissionError:
         logger.info("Audio file already in use. Skipping download...")
 
     # Create song object
     song = youtube_module.Song(
-        song_title, download_path + song_title_formatted + ".mp3", 0, context.channel
+        song_title,
+        settings["download_path"] / f"{song_title_formatted}.mp3",
+        0,
+        context.channel,
     )
 
     # If there is no playlist for this server, create one, add the song, and start the playlist
@@ -60,7 +63,7 @@ async def play_youtube(context: discord.Interaction, link: str):
         playlist = youtube_module.Playlist(context.guild, voice_client)
         playlist.add_song(song)
         youtube_module.guild_playlist[context.guild] = playlist
-        await context.response.send_message("Now playing: " + song_title)
+        await context.response.send_message(f"Now playing: {song_title}")
         await playlist.start_playlist()
         await voice_client.disconnect()
         youtube_module.guild_playlist.pop(context.guild)
@@ -70,10 +73,7 @@ async def play_youtube(context: discord.Interaction, link: str):
         playlist = youtube_module.guild_playlist[context.guild]
         playlist.add_song(song)
         await context.response.send_message(
-            song_title
-            + " added to queue.\n"
-            + str(len(playlist.songs) - 1)
-            + " videos in queue."
+            f"{song_title} added to queue.\n{len(playlist.songs) - 1} videos in queue."
         )
 
 
@@ -103,8 +103,8 @@ async def on_ready():
     logger.info("Carrot Bot Online")
     global synced
     if not synced:
-        await tree.sync(guild=client.get_guild(403381473647919114))
+        await command_tree.sync(guild=client.get_guild(403381473647919114))
         synced = True
 
 
-client.run(token)
+client.run(settings["token"])

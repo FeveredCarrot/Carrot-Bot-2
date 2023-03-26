@@ -1,8 +1,13 @@
-import yt_dlp
-import logging
-import discord
 import asyncio
+import logging
+import pathlib
 
+import yt_dlp
+import discord
+
+import settings_manager
+
+settings = settings_manager.load_settings()
 logger = logging.getLogger("discord")
 guild_playlist = {}
 
@@ -23,14 +28,14 @@ class Song:
         if voice_client.is_connected():
             voice_client.play(
                 discord.FFmpegPCMAudio(
-                    executable="ffmpeg/bin/ffmpeg.exe",
+                    executable=settings["ffmpeg_path"],
                     source=self.file_path,
-                    options="-ss " + str(start_time),
+                    options=f"-ss {str(start_time)}",
                 )
             )
             self.is_playing = True
             if self.playlist.current_song_index != 0:
-                await self.text_channel.send("Now playing: " + self.title)
+                await self.text_channel.send(f"Now playing: {self.title}")
             while voice_client.is_playing():
                 await asyncio.sleep(1)
             self.is_playing = False
@@ -77,6 +82,8 @@ def get_video_info(youtube_link):
 
 
 def download_audio(youtube_link, output_path):
+    output_path = str(pathlib.PurePosixPath(output_path))
+    logger.warning(output_path)
     ydl_opts = {
         "format": "bestaudio/best",
         "postprocessors": [
