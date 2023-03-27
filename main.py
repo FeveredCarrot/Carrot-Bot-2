@@ -21,13 +21,15 @@ synced = False
 
 @command_tree.command(name="play", description="Plays a youtube video.")
 async def play_youtube(context: discord.Interaction, link: str):
+    await context.response.send_message("Loading video info...")
+
     # Try to get YouTube video info
     try:
         info = youtube_module.get_video_info(link)
         song_title = info["title"]
         song_title_formatted = slugify(song_title)
     except youtube_module.yt_dlp.utils.DownloadError or TypeError:
-        await context.response.send_message(
+        await context.edit_original_response(
             content="That link dont work", ephemeral=True
         )
         return
@@ -35,8 +37,8 @@ async def play_youtube(context: discord.Interaction, link: str):
     # Try to get the user's voice channel
     voice_channel = context.user.voice.channel
     if voice_channel is None:
-        await context.response.send_message(
-            "You need to be in a voice channel to play a video."
+        await context.edit_original_response(
+            content="You need to be in a voice channel to play a video."
         )
         return
 
@@ -63,7 +65,7 @@ async def play_youtube(context: discord.Interaction, link: str):
         playlist = youtube_module.Playlist(context.guild, voice_client)
         playlist.add_song(song)
         youtube_module.guild_playlist[context.guild] = playlist
-        await context.response.send_message(f"Now playing: {song_title}")
+        await context.edit_original_response(content=f"Now playing: {song_title}")
         await playlist.start_playlist()
         await voice_client.disconnect()
         youtube_module.guild_playlist.pop(context.guild)
@@ -72,8 +74,8 @@ async def play_youtube(context: discord.Interaction, link: str):
     else:
         playlist = youtube_module.guild_playlist[context.guild]
         playlist.add_song(song)
-        await context.response.send_message(
-            f"{song_title} added to queue.\n{len(playlist.songs) - 1} videos in queue."
+        await context.edit_original_response(
+            content=f"{song_title} added to queue.\n{len(playlist.songs) - 1} videos in queue."
         )
 
 
