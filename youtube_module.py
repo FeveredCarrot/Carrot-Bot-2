@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import pathlib
+from datetime import datetime
 
 import yt_dlp
 import discord
@@ -20,12 +21,14 @@ class Song:
         self.length = length
         self.text_channel = text_channel
         self.playlist = None
+        self.start_time = datetime.now()
 
     def __repr__(self):
         return self.title
 
     async def play(self, voice_client, start_time=0):
         if voice_client.is_connected():
+            self.start_time = datetime.now()
             voice_client.play(
                 discord.FFmpegPCMAudio(
                     executable=settings["ffmpeg_path"],
@@ -47,18 +50,23 @@ class Playlist:
         self.voice_client = voice_client
         self.songs = []
         self.current_song_index = 0
-        self.current_song_time = 0
+
+    @property
+    def current_song_time(self):
+        current_song = self.songs[self.current_song_index]
+        return (datetime.now() - current_song.start_time).seconds
 
     async def play_at_index(self, song_index, start_time=0):
         self.current_song_index = song_index
         await self.songs[self.current_song_index].play(self.voice_client, start_time)
 
-    async def start_playlist(self, song_index=0):
+    async def start_playlist(self, song_index=0, start_time=0):
         self.current_song_index = song_index
 
         while self.current_song_index < len(self.songs):
-            await self.songs[self.current_song_index].play(self.voice_client)
+            await self.songs[self.current_song_index].play(self.voice_client, start_time)
             self.current_song_index += 1
+            start_time = 0
 
     def add_song(self, playlist_song):
         self.songs.append(playlist_song)
@@ -67,7 +75,6 @@ class Playlist:
     def clear(self):
         self.songs = []
         self.current_song_index = 0
-        self.current_song_time = 0
 
 
 def get_video_info(youtube_link):
@@ -83,7 +90,6 @@ def get_video_info(youtube_link):
 
 def download_audio(youtube_link, output_path):
     output_path = str(pathlib.PurePosixPath(output_path))
-    logger.warning(output_path)
     ydl_opts = {
         "format": "bestaudio/best",
         "postprocessors": [

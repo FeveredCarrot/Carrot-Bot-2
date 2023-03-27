@@ -1,9 +1,6 @@
 import re
-import sys
-import json
 import unicodedata
 import logging
-from pathlib import PurePosixPath
 
 import discord
 from discord import app_commands
@@ -21,7 +18,8 @@ synced = False
 
 @command_tree.command(name="play", description="Plays a youtube video.")
 async def play_youtube(context: discord.Interaction, link: str):
-    await context.response.send_message("Loading video info...")
+    async with context.channel.typing():
+        await context.response.send_message(content="Loading video info...")
 
     # Try to get YouTube video info
     try:
@@ -44,9 +42,11 @@ async def play_youtube(context: discord.Interaction, link: str):
 
     # Download the audio from the YouTube video
     try:
-        youtube_module.download_audio(
-            link, settings["download_path"] / song_title_formatted
-        )
+        async with context.channel.typing():
+            await context.edit_original_response(content="Downloading video...")
+            youtube_module.download_audio(
+                link, settings["download_path"] / song_title_formatted
+            )
     except PermissionError:
         logger.info("Audio file already in use. Skipping download...")
 
