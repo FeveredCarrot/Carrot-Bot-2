@@ -41,6 +41,8 @@ class Song:
                 await self.text_channel.send(f"Now playing: {self.title}")
             while voice_client.is_playing():
                 await asyncio.sleep(1)
+
+            voice_client.stop()
             self.is_playing = False
 
 
@@ -56,21 +58,20 @@ class Playlist:
         current_song = self.songs[self.current_song_index]
         return (datetime.now() - current_song.start_time).seconds
 
-    async def play_at_index(self, song_index, start_time=0):
-        self.current_song_index = song_index
-        await self.songs[self.current_song_index].play(self.voice_client, start_time)
-
     async def start_playlist(self, song_index=0, start_time=0):
         self.current_song_index = song_index
-
-        while self.current_song_index < len(self.songs):
-            await self.songs[self.current_song_index].play(self.voice_client, start_time)
-            self.current_song_index += 1
-            start_time = 0
+        await self.songs[self.current_song_index].play(self.voice_client, start_time)
+        await self.next_song()
 
     def add_song(self, playlist_song):
         self.songs.append(playlist_song)
         playlist_song.playlist = self
+
+    async def next_song(self):
+        self.voice_client.stop()
+        self.current_song_index += 1
+        if self.current_song_index < len(self.songs):
+            await self.start_playlist(self.current_song_index)
 
     def clear(self):
         self.songs = []

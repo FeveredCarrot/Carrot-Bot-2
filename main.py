@@ -79,6 +79,17 @@ async def play_youtube(context: discord.Interaction, link: str):
         )
 
 
+@command_tree.command(name="skip", description="Skips to the next video in the playlist")
+async def skip_youtube(context: discord.Interaction):
+    await context.response.send_message(content="Skipping...")
+    # If server does not have an active playlist, skip skipping
+    if youtube_module.guild_playlist[context.guild] is None:
+        await context.edit_original_response(content="Can\'t skip; no videos playing.")
+        return
+    playlist = youtube_module.guild_playlist[context.guild]
+    await playlist.next_song()
+
+
 def slugify(value, allow_unicode=False):
     """
     Taken from https://docs.djangoproject.com/en/4.1/_modules/django/utils/text/#slugify
@@ -105,7 +116,8 @@ async def on_ready():
     logger.info("Carrot Bot Online")
     global synced
     if not synced:
-        await command_tree.sync(guild=client.get_guild(403381473647919114))
+        await command_tree.sync()
+        logger.info("Synchronized commands")
         synced = True
 
 
