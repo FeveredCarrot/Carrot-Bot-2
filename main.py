@@ -1,4 +1,5 @@
 import re
+import os
 import unicodedata
 import logging
 
@@ -79,12 +80,14 @@ async def play_youtube(context: discord.Interaction, link: str):
         )
 
 
-@command_tree.command(name="skip", description="Skips to the next video in the playlist")
+@command_tree.command(
+    name="skip", description="Skips to the next video in the playlist"
+)
 async def skip_youtube(context: discord.Interaction):
     await context.response.send_message(content="Skipping...")
     # If server does not have an active playlist, skip skipping
     if youtube_module.guild_playlist[context.guild] is None:
-        await context.edit_original_response(content="Can\'t skip; no videos playing.")
+        await context.edit_original_response(content="Can't skip; no videos playing.")
         return
     playlist = youtube_module.guild_playlist[context.guild]
     await playlist.next_song()
@@ -121,4 +124,4 @@ async def on_ready():
         synced = True
 
 
-client.run(settings["token"])
+client.run(os.environ["CARROT_BOT_TOKEN"])

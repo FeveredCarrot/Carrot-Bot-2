@@ -4,7 +4,7 @@ import pathlib
 from datetime import datetime
 
 import yt_dlp
-import discord
+from discord import FFmpegPCMAudio
 
 import settings_manager
 
@@ -30,7 +30,7 @@ class Song:
         if voice_client.is_connected():
             self.start_time = datetime.now()
             voice_client.play(
-                discord.FFmpegPCMAudio(
+                FFmpegPCMAudio(
                     executable=settings["ffmpeg_path"],
                     source=self.file_path,
                     options=f"-ss {str(start_time)}",
