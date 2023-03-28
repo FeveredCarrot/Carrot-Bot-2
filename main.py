@@ -7,6 +7,7 @@ import discord
 from discord import app_commands
 
 import youtube_module
+import chatbot_module
 import settings_manager
 
 logger = logging.getLogger("discord")
@@ -115,13 +116,34 @@ def slugify(value, allow_unicode=False):
 
 
 @client.event
+async def on_message(message):
+    if client.user not in message.mentions:
+        return
+
+    channel_id = message.channel.id
+    if channel_id in chatbot_module.channel_bots:
+        chat_bot = chatbot_module.channel_bots[channel_id]
+        response = await chat_bot.get_response()
+        await message.channel.send(content=response)
+
+
+@client.event
 async def on_ready():
     logger.info("Carrot Bot Online")
+
+    # Synchronize commands
     global synced
     if not synced:
         await command_tree.sync()
         logger.info("Synchronized commands")
         synced = True
+
+    # Initialize chatbots
+    for channel_id in settings["chatbot_channels"]:
+        channel = await client.fetch_channel(channel_id)
+        chatbot_module.channel_bots[channel_id] = chatbot_module.ChatBot(
+            channel, client
+        )
 
 
 client.run(os.environ["CARROT_BOT_TOKEN"])
