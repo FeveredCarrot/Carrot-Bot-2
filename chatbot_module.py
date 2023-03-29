@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sys
@@ -30,8 +31,8 @@ class ChatBot:
             limit=settings["chatbot_history_limit"]
         ):
             self.messages.append(self.format_message(message))
-        self.messages.append(settings["chatbot_prompt"])
         self.messages.reverse()
+        self.messages = ChatBot.load_prompts() + self.messages
 
     def format_message(self, message):
         if message.author.id == self.client.user.id:
@@ -45,12 +46,20 @@ class ChatBot:
                 "content": f"{message.author.name}: {message.content}",
             }
 
+    @staticmethod
+    def load_prompts():
+        with open(settings["chatbot_prompts"], "r") as prompts_file:
+            prompts = json.load(prompts_file)
+        return prompts
+
     async def get_response(self):
         await self.generate_messages_list()
         logger.info(self.messages)
         async with self.channel.typing():
             response = openai.ChatCompletion.create(
-                model=settings["openai_model"], messages=self.messages
+                model=settings["openai_model"],
+                messages=self.messages,
+                temperature=settings["chatbot_temperature"],
             )
         response = response["choices"][0]["message"]["content"]
         if "Carrot Bot:" in response[:12]:

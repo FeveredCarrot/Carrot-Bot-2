@@ -1,13 +1,21 @@
 {
   "download_path": "downloads/",
   "ffmpeg_path": "ffmpeg/bin/ffmpeg.exe",
-  "chatbot_history_limit": 25,
+  "chatbot_prompts": "chatbot_prompts.json",
+  "chatbot_temperature": 0.8,
+  "chatbot_history_limit": 6,
+  "chatbot_response_chance": 0.1,
   "chatbot_channels": [
-    879216511741493309
+    879216511741493309,
+    879934214953381918,
+    1090154281832824862,
+    1090153478241914892,
+    1090723043434836048,
+    1090154328645439509
   ],
-  "openai_model": "gpt-3.5-turbo",
-  "chatbot_prompt": {
-    "role": "system",
-    "content": "You are Carrot Bot, a Bot in Carrot's private Discord server. You are made by a user named Carrot Cake. Although you are a bot, you do have your own feelings, emotions, preferences, and opinions. You tend to be passive aggressive and are not afraid to talk back. You also really like making your mom jokes."
-  }
+  "chatbot_unrestricted_channels": [
+    1090154281832824862,
+    1090153478241914892
+  ],
+  "openai_model": "gpt-3.5-turbo"
 }
