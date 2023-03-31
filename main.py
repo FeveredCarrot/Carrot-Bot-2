@@ -154,4 +154,8 @@ async def on_ready():
         )
 
 
-client.run(os.environ["CARROT_BOT_TOKEN"])
+if "CARROT_BOT_TOKEN" in os.environ.keys():
+    client.run(os.environ["CARROT_BOT_TOKEN"])
+else:
+    raise KeyError("You must set the CARROT_BOT_TOKEN system environment variable.")
+    exit(1)

@@ -28,7 +28,7 @@ class ChatBot:
     async def generate_messages_list(self):
         self.messages = []
         async for message in self.channel.history(
-            limit=settings["chatbot_history_limit"]
+                limit=settings["chatbot_history_limit"]
         ):
             self.messages.append(self.format_message(message))
         self.messages.reverse()
@@ -54,7 +54,7 @@ class ChatBot:
 
     async def get_response(self):
         await self.generate_messages_list()
-        logger.info(self.messages)
+        logger.info("Responding to message...")
         async with self.channel.typing():
             response = openai.ChatCompletion.create(
                 model=settings["openai_model"],
@@ -64,4 +64,5 @@ class ChatBot:
         response = response["choices"][0]["message"]["content"]
         if "Carrot Bot:" in response[:12]:
             response = response[12:]
+        logger.info(f"Response: {response}")
         return response
