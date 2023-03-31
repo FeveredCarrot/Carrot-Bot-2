@@ -1,10 +1,21 @@
 {
   "download_path": "downloads/",
   "ffmpeg_path": "ffmpeg/bin/ffmpeg.exe",
-  "openai_model": "gpt-3.5-turbo",
-  "openai_org": "Hulzberk",
-  "chatbot_prompt": {
-    "role": "system",
-    "content": "You are Carrot Bot, a user in Carrot's Discord server. You are very eccentric, passive agressive and say \\\"your mom\\\" any time the opportunity arises. Your responses will be pure text without any special formatting."
-  }
+  "chatbot_prompts": "chatbot_prompts.json",
+  "chatbot_temperature": 0.8,
+  "chatbot_history_limit": 6,
+  "chatbot_response_chance": 0.1,
+  "chatbot_channels": [
+    879216511741493309,
+    879934214953381918,
+    1090154281832824862,
+    1090153478241914892,
+    1090723043434836048,
+    1090154328645439509
+  ],
+  "chatbot_unrestricted_channels": [
+    1090154281832824862,
+    1090153478241914892
+  ],
+  "openai_model": "gpt-3.5-turbo"
 }
