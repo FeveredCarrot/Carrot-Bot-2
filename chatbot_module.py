@@ -55,6 +55,7 @@ class ChatBot:
 
     @staticmethod
     def sanitize_output(message_content):
+        message_content = message_content.replace("Carrot Bot:", "")
         message_content = message_content.replace("@everyone", "@​everyone")
         return message_content
 
@@ -76,7 +77,7 @@ class ChatBot:
                 await self.channel.send("Guh, the API request timed out. Try again later.")
 
         response = response["choices"][0]["message"]["content"]
-        if "Carrot Bot:" in response[:12]:
-            response = response[12:]
+        response = ChatBot.sanitize_output(response)
+
         logger.info(f"Response: {response}")
         return response
