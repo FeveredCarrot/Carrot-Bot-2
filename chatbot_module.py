@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import ssl
 import sys
 
 import discord
@@ -52,15 +53,28 @@ class ChatBot:
             prompts = json.load(prompts_file)
         return prompts
 
+    @staticmethod
+    def sanitize_output(message_content):
+        message_content = message_content.replace("@everyone", "@​everyone")
+        return message_content
+
     async def get_response(self):
         await self.generate_messages_list()
         logger.info("Responding to message...")
         async with self.channel.typing():
-            response = openai.ChatCompletion.create(
-                model=settings["openai_model"],
-                messages=self.messages,
-                temperature=settings["chatbot_temperature"],
-            )
+            try:
+                response = openai.ChatCompletion.create(
+                    model=settings["openai_model"],
+                    messages=self.messages,
+                    temperature=settings["chatbot_temperature"],
+                )
+            except openai.error.RateLimitError:
+                logger.error("Response failed. Bot is being rate limited by OpenAI.")
+                await self.channel.send("Guh, I am being rate limited by OpenAI. Try again later.")
+            except ssl.SSLError:
+                logger.error("Response failed. OpenAI API request timed out.")
+                await self.channel.send("Guh, the API request timed out. Try again later.")
+
         response = response["choices"][0]["message"]["content"]
         if "Carrot Bot:" in response[:12]:
             response = response[12:]

@@ -119,6 +119,8 @@ def slugify(value, allow_unicode=False):
 @client.event
 async def on_message(message):
     channel_id = message.channel.id
+    if channel_id in chatbot_module.channel_bots:
+        chat_bot = chatbot_module.channel_bots[channel_id]
 
     async def chatbot_respond():
         chat_bot = chatbot_module.channel_bots[channel_id]
