@@ -29,13 +29,7 @@ class Song:
     async def play(self, voice_client, start_time=0):
         if voice_client.is_connected():
             self.start_time = datetime.now()
-            voice_client.play(
-                FFmpegPCMAudio(
-                    executable=settings["ffmpeg_path"],
-                    source=self.file_path,
-                    options=f"-ss {str(start_time)}",
-                )
-            )
+            play_video(voice_client, self.file_path, start_time)
             self.is_playing = True
             if self.playlist.current_song_index != 0:
                 await self.text_channel.send(f"Now playing: {self.title}")
@@ -106,3 +100,13 @@ def download_audio(youtube_link, output_path):
     }
 
     yt_dlp.YoutubeDL(ydl_opts).download([youtube_link])
+
+
+def play_video(voice_client, file_path, start_time=0):
+    voice_client.play(
+        FFmpegPCMAudio(
+            executable=settings["ffmpeg_path"],
+            source=file_path,
+            options=f"-ss {str(start_time)}",
+        )
+    )

@@ -1,6 +1,9 @@
 {
-  "download_path": "downloads/",
+  "download_path": "assets/downloads/",
   "ffmpeg_path": "ffmpeg/bin/ffmpeg.exe",
+  "sound_effect_path": "assets/sfx",
+  "sound_effect_min_interval": 3600,
+  "sound_effect_max_interval": 14400,
   "chatbot_prompts": "chatbot_prompts.json",
   "chatbot_temperature": 0.8,
   "chatbot_history_limit": 6,

@@ -1,3 +1,4 @@
+import asyncio.exceptions
 import random
 import re
 import os
@@ -6,6 +7,7 @@ import logging
 
 import discord
 from discord import app_commands
+from discord.ext import commands
 
 import youtube_module
 import chatbot_module
@@ -95,6 +97,42 @@ async def skip_youtube(context: discord.Interaction):
     await playlist.next_song()
 
 
+def get_random_file(path):
+    random_file = random.choice(os.listdir(path))
+    logger.debug(random_file)
+    return random_file
+
+
+def get_populated_voice_channels(guild):
+    populated_voice_channels = []
+    for voice_channel in guild.voice_channels:
+        if len(voice_channel.members) > 0:
+            populated_voice_channels.append(voice_channel)
+
+    return populated_voice_channels
+
+
+async def randomly_play_sound():
+    while True:
+
+        sound_effect_path = f"{settings['sound_effect_path']}/{get_random_file(settings['sound_effect_path'])}"
+        guild = random.choice(client.guilds)
+        populated_voice_channels = get_populated_voice_channels(guild)
+        if len(populated_voice_channels) == 0:
+            logger.info("Nobody connected to vc. Skipping this sound effect...")
+            continue
+        voice_channel = random.choice(populated_voice_channels)
+        voice_client = await voice_channel.connect()
+        if voice_client.is_connected():
+            youtube_module.play_video(voice_client, sound_effect_path)
+            while voice_client.is_playing():
+                await asyncio.sleep(1)
+            voice_client.stop()
+            await voice_client.disconnect()
+
+        await asyncio.sleep(settings["sound_effect_min_interval"], settings["sound_effect_max_interval"])
+
+
 def slugify(value, allow_unicode=False):
     """
     Taken from https://docs.djangoproject.com/en/4.1/_modules/django/utils/text/#slugify
@@ -127,12 +165,11 @@ async def on_message(message):
         response = await chat_bot.get_response()
         await message.channel.send(content=response)
 
-    if client.user in message.mentions and channel_id in chatbot_module.channel_bots:
+    if client.user in message.mentions and channel_id in chatbot_module.channel_bots and message.author != client.user:
         await chatbot_respond()
     elif (
             channel_id in settings["chatbot_unrestricted_channels"]
             and random.uniform(0, 1) < settings["chatbot_response_chance"]
-            and client.user is not message.author
     ):
         await chatbot_respond()
 
@@ -155,9 +192,26 @@ async def on_ready():
             channel, client
         )
 
+    # Random sound effect loop
+    await randomly_play_sound()
 
-if "CARROT_BOT_TOKEN" in os.environ.keys():
-    client.run(os.environ["CARROT_BOT_TOKEN"])
-else:
-    raise KeyError("You must set the CARROT_BOT_TOKEN system environment variable.")
-    exit(1)
+
+@client.event
+async def on_command_error(ctx: commands.Context, error: commands.CommandError):
+    logger.error(error.with_traceback)
+
+
+def start_bot(bot_token):
+    try:
+        client.run(os.environ[bot_token])
+    except asyncio.exceptions.TimeoutError:
+        logger.warning("Bot connection timed out.")
+        # start_bot()
+
+
+if __name__ == "__main__":
+    if "CARROT_BOT_TOKEN" in os.environ.keys():
+        start_bot("CARROT_BOT_TOKEN")
+    else:
+        raise KeyError("You must set the CARROT_BOT_TOKEN system environment variable.")
+        exit(1)
