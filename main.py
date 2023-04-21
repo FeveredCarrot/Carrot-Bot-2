@@ -114,6 +114,7 @@ def get_populated_voice_channels(guild):
 
 async def randomly_play_sound():
     while True:
+        await asyncio.sleep(settings["sound_effect_min_interval"], settings["sound_effect_max_interval"])
 
         sound_effect_path = f"{settings['sound_effect_path']}/{get_random_file(settings['sound_effect_path'])}"
         guild = random.choice(client.guilds)
@@ -125,12 +126,11 @@ async def randomly_play_sound():
         voice_client = await voice_channel.connect()
         if voice_client.is_connected():
             youtube_module.play_video(voice_client, sound_effect_path)
+            logger.info(f"Playing sound effect in {voice_channel.name}: {sound_effect_path}")
             while voice_client.is_playing():
                 await asyncio.sleep(1)
             voice_client.stop()
             await voice_client.disconnect()
-
-        await asyncio.sleep(settings["sound_effect_min_interval"], settings["sound_effect_max_interval"])
 
 
 def slugify(value, allow_unicode=False):
