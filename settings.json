@@ -7,10 +7,12 @@
   "chatbot_prompts": "chatbot_prompts.json",
   "chatbot_temperature": 0.8,
   "chatbot_history_limit": 6,
-  "chatbot_response_chance": 0.07,
+  "chatbot_response_chance": 0.05,
   "chatbot_channels": [
     879216511741493309,
-    879934214953381918
+    879934214953381918,
+    378547610170032129,
+    601942201467011083
   ],
   "chatbot_unrestricted_channels": [
     879216511741493309

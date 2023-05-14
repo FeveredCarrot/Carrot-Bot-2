@@ -114,11 +114,16 @@ def get_populated_voice_channels(guild):
 
 async def randomly_play_sound():
     while True:
-        await asyncio.sleep(settings["sound_effect_min_interval"], settings["sound_effect_max_interval"])
+        seconds_till_next_sound = random.uniform(
+            settings["sound_effect_min_interval"],
+            settings["sound_effect_max_interval"])
+
+        await asyncio.sleep(seconds_till_next_sound)
 
         sound_effect_path = f"{settings['sound_effect_path']}/{get_random_file(settings['sound_effect_path'])}"
-        guild = random.choice(client.guilds)
-        populated_voice_channels = get_populated_voice_channels(guild)
+        populated_voice_channels = []
+        for guild in client.guilds:
+            populated_voice_channels += get_populated_voice_channels(guild)
         if len(populated_voice_channels) == 0:
             logger.info("Nobody connected to vc. Skipping this sound effect...")
             continue
@@ -172,6 +177,16 @@ async def on_message(message):
             and random.uniform(0, 1) < settings["chatbot_response_chance"]
     ):
         await chatbot_respond()
+
+
+ping_channel_id = 879216511741493309
+ping_user_id = 483400675624222720
+
+
+@client.event
+async def on_presence_update(before: discord.Member, after: discord.Member):
+    if before.status == "offline" and after.status != "offline" and after.id == ping_user_id:
+        await client.get_channel(ping_channel_id).send(content=f"Good Morning <@{ping_user_id}>!")
 
 
 @client.event
